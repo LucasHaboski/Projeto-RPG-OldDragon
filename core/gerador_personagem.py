@@ -1,8 +1,17 @@
 from models.atributos import Atributos
+from models.personagem import Personagem
 from generators.estilo_geracao import EstiloGeracao
 from generators.estilo_classico import EstiloClassico
 from generators.estilo_aventureiro import EstiloAventureiro
 from generators.estilo_heroico import EstiloHeroico
+from races.humano import Humano
+from races.elfo import Elfo
+from races.anao import Anao
+from races.halfling import Halfling
+from classes.guerreiro import Guerreiro
+from classes.clerigo import Clerigo
+from classes.druida import Druida
+from core.validador import ValidadorPersonagem
 
 class GeradorPersonagem:
     """Classe principal responsável por gerenciar a criação de personagens"""
@@ -13,20 +22,78 @@ class GeradorPersonagem:
             "2": EstiloAventureiro(),
             "3": EstiloHeroico()
         }
+        
+        self.racas = {
+            "1": Humano(),
+            "2": Elfo(),
+            "3": Anao(),
+            "4": Halfling()
+        }
+        
+        self.classes = {
+            "1": Guerreiro(),
+            "2": Clerigo(),
+            "3": Druida()
+        }
     
-    def exibir_menu(self) -> None:
-        """Exibe o menu de opções"""
+    def exibir_menu_principal(self) -> None:
+        """Exibe o menu principal de opções"""
         print("\n" + "="*50)
-        print("    GERADOR DE ATRIBUTOS - OLD DRAGON")
+        print("    GERADOR DE PERSONAGENS - OLD DRAGON")
         print("="*50)
-        print("\nEscolha o estilo de geração:")
-        print("1. Estilo Clássico")
-        print("2. Estilo Aventureiro") 
-        print("3. Estilo Heroico")
+        print("\nEscolha uma opção:")
+        print("1. Criar novo personagem completo")
+        print("2. Apenas gerar atributos")
         print("0. Sair")
         print("-"*50)
     
-    def gerar_personagem(self, estilo: EstiloGeracao) -> Atributos:
+    def exibir_menu_estilos(self) -> None:
+        """Exibe o menu de estilos de geração"""
+        print("\n" + "="*40)
+        print("    ESTILOS DE GERAÇÃO")
+        print("="*40)
+        print("1. Estilo Clássico (3d6 em ordem)")
+        print("2. Estilo Aventureiro (3d6 distribuível)")
+        print("3. Estilo Heroico (4d6, descarta menor)")
+        print("0. Voltar")
+        print("-"*40)
+    
+    def exibir_menu_racas(self) -> None:
+        """Exibe o menu de raças disponíveis"""
+        print("\n" + "="*40)
+        print("    ESCOLHA DA RAÇA")
+        print("="*40)
+        for num, raca in self.racas.items():
+            nome = raca.__class__.__name__
+            print(f"{num}. {nome}")
+            print(f"   {raca.get_descricao()}")
+        print("0. Voltar")
+        print("-"*40)
+    
+    def exibir_menu_classes(self, personagem: Personagem = None) -> None:
+        """Exibe o menu de classes disponíveis"""
+        print("\n" + "="*40)
+        print("    ESCOLHA DA CLASSE")
+        print("="*40)
+        
+        classes_viaveis = []
+        if personagem:
+            classes_viaveis = ValidadorPersonagem.sugerir_classes_viaveis(personagem)
+        
+        for num, classe in self.classes.items():
+            nome = classe.__class__.__name__
+            viavel = nome in classes_viaveis if personagem else True
+            status = "✓" if viavel else "✗"
+            print(f"{num}. {status} {nome}")
+            print(f"   {classe.get_descricao()}")
+            
+            if personagem:
+                requisitos = classe.get_requisitos_atributos()
+                req_texto = ", ".join([f"{k}:{v}+" for k, v in requisitos.items()])
+                print(f"   Requisitos: {req_texto}")
+        
+        print("0. Voltar")
+        print("-"*40)
         """Gera um personagem usando o estilo especificado"""
         print(f"\n{estilo.get_descricao()}")
         
