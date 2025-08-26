@@ -1,4 +1,3 @@
-from unittest import result
 from models import personagem
 from models.atributos import Atributos
 from models.personagem import Personagem
@@ -14,7 +13,7 @@ from classes.guerreiro import Guerreiro
 from classes.clerigo import Clerigo
 from classes.druida import Druida
 from core.validador import ValidadorPersonagem
-from models.atributos import Atributos
+
 
 
 def exibir_info_raca(self, raca) -> None:
