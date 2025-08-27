@@ -4,15 +4,27 @@ from models.atributos import Atributos
 class Personagem:
     """Classe que representa um personagem completo de Old Dragon"""
     
-    def __init__(self, nome: str = ""):
+    def __init__(
+        self,
+        atributos: Optional[Atributos] = None,
+        raca: Optional[object] = None,
+        classe: Optional[object] = None,
+        nome: str = ""
+    ):
         self.nome = nome
-        self.atributos = Atributos()
-        self.raca: Optional[object] = None
-        self.classe: Optional[object] = None
+        self.atributos = atributos if atributos is not None else Atributos()
+        self.raca = raca
+        self.classe = classe
         self.nivel = 1
         self.pontos_vida = 0
         self.classe_armadura = 10
         self.jogada_protecao = 15
+
+        # Aplica modificadores e cálculos se raça/classe já vierem preenchidos
+        if self.raca:
+            self.definir_raca(self.raca)
+        if self.classe:
+            self.definir_classe(self.classe)
     
     def definir_raca(self, raca) -> None:
         """Define a raça do personagem e aplica seus modificadores"""
