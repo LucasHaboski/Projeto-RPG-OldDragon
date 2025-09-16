@@ -1,3 +1,4 @@
+# generators/estilo_heroico.py
 from typing import List
 from models.dado import Dado
 from models.atributos import Atributos
@@ -11,29 +12,13 @@ class EstiloHeroico(EstiloGeracao):
         return [Dado.rolar_4d6_drop_lowest() for _ in range(6)]
     
     def aplicar_valores(self, atributos: Atributos, valores: List[int]) -> None:
-        """Permite ao jogador distribuir os valores como desejar"""
-        print("\n=== DISTRIBUIÇÃO DE ATRIBUTOS ===")
-        print(f"Valores obtidos: {valores}")
-        print("\nAtributos disponíveis:")
-        for i, nome in enumerate(Atributos.NOMES_ATRIBUTOS):
-            print(f"{i+1}. {nome}")
-        
-        valores_disponiveis = valores.copy()
-        
-        for nome in Atributos.NOMES_ATRIBUTOS:
-            while True:
-                try:
-                    print(f"\nValores disponíveis: {valores_disponiveis}")
-                    escolha = int(input(f"Escolha um valor para {nome} (digite o valor): "))
-                    
-                    if escolha in valores_disponiveis:
-                        atributos.definir_atributo(nome, escolha)
-                        valores_disponiveis.remove(escolha)
-                        break
-                    else:
-                        print("Valor inválido ou já usado!")
-                except ValueError:
-                    print("Por favor, digite um número válido!")
+        """
+        Em uma aplicação web, a distribuição de valores é feita pela
+        lógica do servidor (controller/rota) e não pela classe de estilo,
+        para evitar a necessidade de input do usuário.
+        Portanto, este método não precisa realizar nenhuma ação.
+        """
+        pass
     
     def get_descricao(self) -> str:
         return "Estilo Heroico: Role 4d6 eliminando o menor, seis vezes e distribua como desejar"

@@ -1,18 +1,5 @@
-"""
-Aplicação Web com Flask para o Sistema de Criação de Personagens - Old Dragon RPG
-
-Este script serve como a interface web para o gerador de personagens,
-substituindo a interação via linha de comando por uma página HTML interativa.
-
-Funcionalidades:
-- Tela inicial com formulário para escolher nome, estilo, raça e classe.
-- Processa a seleção do usuário e redireciona para uma nova página.
-- Exibe a ficha completa do personagem gerado em uma tela dedicada.
-
-Autor: Sistema Old Dragon (Adaptação para Web)
-Versão: 3.2
-"""
-from flask import Flask, render_template, request, redirect, url_for, session
+# app.py
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 # Importa as classes principais do seu projeto.
 from core.gerador_personagem import GeradorPersonagem
@@ -21,92 +8,137 @@ from models.atributos import Atributos
 
 # Inicializa a aplicação Flask
 app = Flask(__name__)
-# Uma 'secret_key' é necessária para usar o objeto 'session' do Flask,
-# que armazena os dados do personagem entre as requisições.
-app.secret_key = 'uma-chave-secreta-muito-segura-para-o-projeto-rpg'
+app.secret_key = 'key'
 
-# Cria uma instância global do gerador para ter acesso às listas de estilos, raças e classes.
+# Cria uma instância global do gerador
 try:
     gerador = GeradorPersonagem()
 except Exception as e:
-    print(f"ERRO: Falha ao inicializar o GeradorPersonagem. Verifique os arquivos do projeto. Erro: {e}")
+    print(f"ERRO: Falha ao inicializar o GeradorPersonagem. Erro: {e}")
     gerador = None
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
     """
-    Rota principal que renderiza o formulário de criação.
-    Se a requisição for POST, gera o personagem, armazena na sessão e redireciona.
+    Rota principal. GET: mostra o formulário.
+    POST: processa a criação inicial e redireciona para a distribuição ou para a ficha final.
     """
     if not gerador:
-        return "<h1>Erro Crítico</h1><p>Não foi possível carregar as classes do gerador de personagens.</p>", 500
+        return "<h1>Erro Crítico</h1><p>Não foi possível carregar as classes do gerador.</p>", 500
 
     if request.method == 'POST':
-        try:
-            nome_personagem = request.form.get('nome', 'Aventureiro(a)')
-            estilo_key = request.form.get('estilo')
-            raca_key = request.form.get('raca')
-            classe_key = request.form.get('classe')
+        # Salva os dados do formulário em uma variável de sessão temporária
+        session['temp_character'] = {
+            'nome': request.form.get('nome', 'Aventureiro(a)'),
+            'estilo_key': request.form.get('estilo'),
+            'raca_key': request.form.get('raca'),
+            'classe_key': request.form.get('classe')
+        }
+        
+        estilo_key = session['temp_character']['estilo_key']
+        estilo_obj = gerador.estilos.get(estilo_key)
 
-            estilo_obj = gerador.estilos.get(estilo_key)
-            raca_obj = gerador.racas.get(raca_key)
-            classe_obj = gerador.classes.get(classe_key)
-
-            if estilo_obj and raca_obj and classe_obj:
-                atributos = Atributos()
-                valores_gerados = estilo_obj.gerar_valores()
-
-                # Lógica adaptada para a web: estilos que antes pediam input do usuário
-                # agora são tratados de forma automática.
-                if estilo_key in ["2", "3"]: # Aventureiro e Heroico
-                    # Ordena os valores do maior para o menor para uma distribuição otimizada.
-                    valores_gerados.sort(reverse=True)
-                    for i, nome_attr in enumerate(Atributos.NOMES_ATRIBUTOS):
-                        atributos.definir_atributo(nome_attr, valores_gerados[i])
-                else: # Clássico
-                    # Usa o método original que não precisa de interação.
-                    estilo_obj.aplicar_valores(atributos, valores_gerados)
-
-                personagem_final = Personagem(
-                    nome=nome_personagem,
-                    atributos=atributos,
-                    raca=raca_obj,
-                    classe=classe_obj
-                )
-
-                # Armazena o resumo do personagem na sessão do usuário
-                session['character'] = personagem_final.obter_resumo()
-
-                # Redireciona o usuário para a nova página da ficha de personagem
-                return redirect(url_for('exibir'))
-
-        except Exception as e:
-            print(f"Ocorreu um erro durante a geração do personagem: {e}")
-            # Em caso de erro, apenas recarrega a página principal.
+        if not estilo_obj:
+            flash("Estilo de geração inválido.", "error")
             return redirect(url_for('home'))
 
-    # Se for uma requisição GET, apenas mostra o formulário de criação.
+        # Gera os valores dos atributos
+        valores_gerados = estilo_obj.gerar_valores()
+        session['valores_gerados'] = valores_gerados
+
+        # Se o estilo for Clássico, cria o personagem diretamente
+        if estilo_key == "1": # Supondo que '1' é a key para EstiloClassico
+            atributos = Atributos()
+            estilo_obj.aplicar_valores(atributos, valores_gerados)
+            
+            # Reúne tudo para criar o personagem final
+            raca_obj = gerador.racas.get(session['temp_character']['raca_key'])
+            classe_obj = gerador.classes.get(session['temp_character']['classe_key'])
+
+            personagem_final = Personagem(
+                nome=session['temp_character']['nome'],
+                atributos=atributos,
+                raca=raca_obj,
+                classe=classe_obj
+            )
+            session['character'] = personagem_final.obter_resumo()
+            # Limpa os dados temporários
+            session.pop('temp_character', None)
+            session.pop('valores_gerados', None)
+            return redirect(url_for('exibir'))
+        else:
+            # Para Aventureiro e Heroico, redireciona para a página de distribuição
+            return redirect(url_for('distribuir_atributos'))
+
     return render_template('index.html',
                            estilos=gerador.estilos,
                            racas=gerador.racas,
                            classes=gerador.classes)
 
+@app.route('/distribuir-atributos', methods=['GET', 'POST'])
+def distribuir_atributos():
+    """
+    Nova rota para permitir que o usuário distribua os atributos rolados.
+    """
+    # Se o usuário tentar acessar essa página sem dados, redireciona para o início
+    if 'temp_character' not in session or 'valores_gerados' not in session:
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        try:
+            atributos = Atributos()
+            valores_usados = []
+            
+            # Pega os valores do formulário e atribui
+            for nome_attr in Atributos.NOMES_ATRIBUTOS:
+                valor = int(request.form.get(nome_attr))
+                atributos.definir_atributo(nome_attr, valor)
+                valores_usados.append(valor)
+            
+            # Validação: verifica se o usuário usou os valores corretos
+            if sorted(valores_usados) != sorted(session['valores_gerados']):
+                # Se algo der errado (ex: usuário manipulou o HTML), retorna com erro
+                flash("Houve um erro na distribuição dos atributos. Tente novamente.", "error")
+                return redirect(url_for('distribuir_atributos'))
+
+            # Monta o personagem final
+            char_data = session['temp_character']
+            raca_obj = gerador.racas.get(char_data['raca_key'])
+            classe_obj = gerador.classes.get(char_data['classe_key'])
+
+            personagem_final = Personagem(
+                nome=char_data['nome'],
+                atributos=atributos,
+                raca=raca_obj,
+                classe=classe_obj
+            )
+            session['character'] = personagem_final.obter_resumo()
+
+            # Limpa os dados temporários da sessão
+            session.pop('temp_character', None)
+            session.pop('valores_gerados', None)
+
+            return redirect(url_for('exibir'))
+        except Exception as e:
+            print(f"Erro ao finalizar personagem: {e}")
+            flash("Ocorreu um erro inesperado ao finalizar o personagem.", "error")
+            return redirect(url_for('home'))
+
+    # Se a requisição for GET, apenas exibe a página de distribuição
+    return render_template('distribuir.html',
+                           valores_gerados=session['valores_gerados'],
+                           atributos_nomes=Atributos.NOMES_ATRIBUTOS)
+
 @app.route('/character-sheet')
 def exibir():
     """
-    Esta nova rota exibe a ficha do personagem que foi armazenada na sessão.
+    Exibe a ficha do personagem que foi armazenada na sessão.
     """
-    # Recupera os dados do personagem da sessão.
     personagem = session.get('character', None)
-
-    # Se não houver personagem na sessão (ex: usuário acessou a URL direto),
-    # redireciona de volta para a página inicial.
     if not personagem:
         return redirect(url_for('home'))
-
     return render_template('exibir.html', personagem=personagem)
 
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-
