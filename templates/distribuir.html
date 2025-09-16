@@ -6,7 +6,7 @@
     <title>Distribuição de Atributos - Old Dragon</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {
@@ -45,7 +45,7 @@
         }
     </style>
 </head>
-<body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
+<body class="text-gray-200 flex items-center justify-center min-h-screen p-4" data-valores-gerados='{{ valores_gerados|tojson }}'>
 
     <div class="max-w-xl w-full">
         <div class="card p-8 rounded-lg">
@@ -82,32 +82,39 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const selects = document.querySelectorAll('.attribute-select');
+        
+        // MUDANÇA #2: Lemos os valores do atributo data-* do body, sem código Jinja2 aqui.
+        const bodyElement = document.querySelector('body');
+        const initialValues = JSON.parse(bodyElement.dataset.valoresGerados);
+        
+        // 1. Contar quantas vezes cada valor aparece inicialmente
+        const initialCounts = {};
+        for (const value of initialValues) {
+            initialCounts[value] = (initialCounts[value] || 0) + 1;
+        }
 
         function updateOptions() {
-            const usedValues = new Set();
-            // Coleta todos os valores que já foram selecionados
+            // 2. Contar quantas vezes cada valor está sendo USADO atualmente
+            const usedCounts = {};
             selects.forEach(s => {
                 if (s.value) {
-                    usedValues.add(parseInt(s.value, 10));
+                    const selectedValue = parseInt(s.value, 10);
+                    usedCounts[selectedValue] = (usedCounts[selectedValue] || 0) + 1;
                 }
             });
 
-            // Itera sobre cada select para atualizar suas opções
+            // 3. Atualizar cada menu dropdown
             selects.forEach(select => {
                 const currentValue = select.value ? parseInt(select.value, 10) : null;
                 
-                // Itera sobre cada option dentro do select
                 select.querySelectorAll('option').forEach(option => {
-                    // Ignora a option "Escolha..."
-                    if (!option.value) {
-                        return;
-                    }
+                    if (!option.value) return; // Ignora o "Escolha..."
 
                     const optionValue = parseInt(option.value, 10);
+                    
+                    const isUsedUp = (usedCounts[optionValue] || 0) >= (initialCounts[optionValue] || 0);
 
-                    // Desabilita a opção se ela já foi usada em OUTRO select.
-                    // A opção que já está selecionada neste select deve permanecer habilitada.
-                    if (usedValues.has(optionValue) && optionValue !== currentValue) {
+                    if (isUsedUp && optionValue !== currentValue) {
                         option.disabled = true;
                     } else {
                         option.disabled = false;
@@ -116,12 +123,10 @@
             });
         }
 
-        // Adiciona um "ouvinte" para cada menu dropdown
         selects.forEach(select => {
             select.addEventListener('change', updateOptions);
         });
 
-        // Chama a função uma vez no início para inicializar o estado
         updateOptions();
     });
 </script>

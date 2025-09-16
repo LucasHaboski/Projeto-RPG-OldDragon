@@ -93,9 +93,9 @@ class ValidadorPersonagem:
     @staticmethod
     def sugerir_classes_viaveis(personagem: Personagem) -> List[str]:
         """Sugere classes que o personagem pode escolher baseado nos atributos"""
-        from classes.guerreiro import Guerreiro
-        from classes.clerigo import Clerigo
-        from classes.druida import Druida
+        from models.guerreiro import Guerreiro
+        from models.clerigo import Clerigo
+        from models.druida import Druida
         
         classes_disponiveis = [Guerreiro(), Clerigo(), Druida()]
         classes_viaveis = []

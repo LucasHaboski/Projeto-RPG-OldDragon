@@ -7,9 +7,9 @@ from races.humano import Humano
 from races.elfo import Elfo
 from races.anao import Anao
 from races.halfling import Halfling
-from classes.guerreiro import Guerreiro
-from classes.clerigo import Clerigo
-from classes.druida import Druida
+from models.guerreiro import Guerreiro
+from models.clerigo import Clerigo
+from models.druida import Druida
 from core.validador import ValidadorPersonagem
 
 

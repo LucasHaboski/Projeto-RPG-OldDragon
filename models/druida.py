@@ -1,5 +1,5 @@
 from typing import Dict, List
-from classes.classe_base import ClasseBase
+from models.classe_base import ClasseBase
 
 class Druida(ClasseBase):
     """Implementa a classe Druida do Old Dragon (subclasse do Clérigo)"""
