@@ -270,9 +270,14 @@ class GeradorPersonagem:
                     if personagem:
                         self.exibir_personagem_completo(personagem)
                         
-                        # Opção de salvar (simplificada)
-                        salvar = input("\nDeseja ver o resumo novamente? (s/n): ").strip().lower()
+                        # <--- Alteração: Opção de salvar JSON adicionada aqui --->
+                        salvar = input("\nDeseja salvar o personagem em JSON? (s/n): ").strip().lower()
                         if salvar in ['s', 'sim']:
+                            personagem.salvar_json()
+
+                        # Opção de ver resumo novamente (mantida)
+                        ver_novamente = input("\nDeseja ver o resumo novamente? (s/n): ").strip().lower()
+                        if ver_novamente in ['s', 'sim']:
                             self.exibir_personagem_completo(personagem)
                     
                     input("\nPressione ENTER para continuar...")
@@ -295,5 +300,3 @@ class GeradorPersonagem:
             except Exception as e:
                 print(f"Erro inesperado: {e}")
                 input("Pressione ENTER para continuar...")
-
-

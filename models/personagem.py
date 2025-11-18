@@ -1,5 +1,6 @@
 from typing import Optional
 from models.atributos import Atributos
+import json  # <--- Alteração: Importação adicionada
 
 class Personagem:
     """Classe que representa um personagem completo de Old Dragon"""
@@ -119,3 +120,34 @@ class Personagem:
             resumo["habilidades_classe"] = [hab["nome"] for hab in self.classe.get_habilidades()]
         
         return resumo
+
+    # <--- Alteração: Método salvar_json adicionado aqui --->
+    def salvar_json(self, nome_arquivo="personagem_salvo.json"):
+        """Salva a instância do personagem em um arquivo JSON usando __dict__"""
+        
+        # Cria uma cópia do dicionário da instância atual
+        dados = self.__dict__.copy()
+        
+        # Precisamos converter os objetos complexos internos também para dicionários
+        if self.atributos:
+            dados['atributos'] = self.atributos.__dict__['atributos']
+            
+        if self.raca:
+            # Salva o nome da classe da raça (ex: "Humano") e seus atributos
+            dados_raca = self.raca.__dict__.copy()
+            dados_raca['nome_raca'] = self.raca.__class__.__name__
+            dados['raca'] = dados_raca
+            
+        if self.classe:
+             # Salva o nome da classe (ex: "Guerreiro") e seus atributos
+            dados_classe = self.classe.__dict__.copy()
+            dados_classe['nome_classe'] = self.classe.__class__.__name__
+            dados['classe'] = dados_classe
+
+        # Salva no arquivo
+        try:
+            with open(nome_arquivo, "w", encoding="utf-8") as arquivo:
+                json.dump(dados, arquivo, indent=4, ensure_ascii=False)
+            print(f"\n✅ Personagem salvo com sucesso em '{nome_arquivo}'!")
+        except Exception as e:
+            print(f"\n❌ Erro ao salvar arquivo: {e}")
