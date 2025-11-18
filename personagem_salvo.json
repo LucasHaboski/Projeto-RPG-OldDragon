@@ -1,12 +1,12 @@
 {
     "nome": "",
     "atributos": {
-        "Força": 11,
-        "Destreza": 7,
-        "Constituição": 6,
-        "Inteligência": 9,
-        "Sabedoria": 5,
-        "Carisma": 7
+        "Força": 0,
+        "Destreza": 4,
+        "Constituição": 3,
+        "Inteligência": 0,
+        "Sabedoria": 0,
+        "Carisma": 0
     },
     "raca": {
         "movimento": 9,
@@ -21,7 +21,7 @@
         "nome_classe": "Guerreiro"
     },
     "nivel": 1,
-    "pontos_vida": 7,
-    "classe_armadura": 11,
+    "pontos_vida": 5,
+    "classe_armadura": 12,
     "jogada_protecao": 14
 }
